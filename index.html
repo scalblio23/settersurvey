@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Sales Rep Application</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:         #ffffff;
+    --bg-soft:    #faf8ff;
+    --surface:    #f5f2ff;
+    --line:       #e7e1f7;
+    --line-2:     #d8cff0;
+    --text:       #1c1533;
+    --muted:      #6d6688;
+    --muted-2:    #9a93b3;
+    --accent:     #7c3aed;
+    --accent-dk:  #6425cf;
+    --accent-soft:#f0eafd;
+    --accent-ink: #ffffff;
+    --danger:     #e5484d;
+    --radius:     14px;
+    --maxw:       620px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  /* ---- progress ---- */
+  #progress {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 4px; background: var(--surface);
+    z-index: 50;
+  }
+  #progress > span {
+    display: block; height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent-dk), var(--accent));
+    transition: width .45s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ---- brand mark ---- */
+  #brand {
+    position: fixed; top: 22px; left: 24px; z-index: 40;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700; font-size: 15px; letter-spacing: -.01em;
+    color: var(--text); display: flex; align-items: center; gap: 8px;
+  }
+  #brand .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 12px rgba(124,58,237,0.5);
+  }
+
+  /* ---- stage ---- */
+  #stage {
+    height: 100%; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    padding: 88px 24px 24px;
+  }
+
+  .card {
+    width: 100%; max-width: var(--maxw);
+    display: none;
+    animation: rise .5s cubic-bezier(.16,1,.3,1);
+  }
+  .card.active { display: block; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 12.5px; font-weight: 600; letter-spacing: .04em;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .eyebrow .num { color: var(--muted-2); font-variant-numeric: tabular-nums; }
+  .eyebrow .arrow { color: var(--line-2); }
+
+  h1.q {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 600; font-size: clamp(1.55rem, 4.4vw, 2.35rem);
+    line-height: 1.12; letter-spacing: -.02em;
+    margin-bottom: 10px;
+  }
+  .hint {
+    color: var(--muted); font-size: 15px; line-height: 1.5;
+    margin-bottom: 30px; max-width: 46ch;
+  }
+
+  /* ---- text inputs ---- */
+  .field {
+    width: 100%; background: transparent; border: none;
+    border-bottom: 2px solid var(--line-2);
+    color: var(--text); font-family: inherit;
+    font-size: clamp(1.15rem, 3vw, 1.5rem); font-weight: 450;
+    padding: 10px 2px; outline: none;
+    transition: border-color .2s;
+  }
+  .field::placeholder { color: var(--muted-2); }
+  .field:focus { border-color: var(--accent); }
+
+  textarea.field {
+    resize: none; line-height: 1.4; min-height: 108px;
+    border: 2px solid var(--line-2); border-radius: var(--radius);
+    padding: 16px; font-size: clamp(1.05rem, 2.6vw, 1.25rem);
+    background: var(--bg-soft);
+  }
+  textarea.field:focus { border-color: var(--accent); }
+
+  .meta-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 12px; font-size: 13px; color: var(--muted-2);
+  }
+  .meta-row .ok { color: var(--accent); }
+
+  /* ---- choice options ---- */
+  .options { display: flex; flex-direction: column; gap: 11px; }
+  .options.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 11px; }
+  .opt {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--bg-soft); border: 1.5px solid var(--line);
+    border-radius: var(--radius); padding: 15px 18px;
+    cursor: pointer; text-align: left;
+    font-family: inherit; font-size: 16px; font-weight: 500; color: var(--text);
+    transition: border-color .16s, background .16s, transform .08s;
+  }
+  .opt:hover { border-color: var(--line-2); background: var(--surface); }
+  .opt:active { transform: scale(.99); }
+  .opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+  .opt .key {
+    flex: none; width: 26px; height: 26px; border-radius: 7px;
+    border: 1.5px solid var(--line-2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--muted); transition: inherit;
+  }
+  .opt.sel .key {
+    background: var(--accent); border-color: var(--accent); color: var(--accent-ink);
+  }
+
+  /* ---- controls ---- */
+  .controls { display: flex; align-items: center; gap: 14px; margin-top: 30px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: "Space Grotesk", sans-serif; font-weight: 600;
+    font-size: 15px; cursor: pointer; border: none;
+    border-radius: 11px; padding: 13px 22px;
+    transition: transform .08s, box-shadow .2s, opacity .2s;
+  }
+  .btn-primary {
+    background: var(--accent); color: var(--accent-ink);
+    box-shadow: 0 6px 22px -8px rgba(124,58,237,0.7);
+  }
+  .btn-primary:hover { box-shadow: 0 10px 30px -8px rgba(124,58,237,0.7); }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-primary:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; }
+  .btn-ghost { background: transparent; color: var(--muted); padding: 13px 8px; }
+  .btn-ghost:hover { color: var(--text); }
+  .enterhint { font-size: 12.5px; color: var(--muted-2); }
+  .enterhint b { color: var(--muted); font-weight: 600; }
+
+  .err { color: var(--danger); font-size: 13.5px; margin-top: 12px; min-height: 18px; }
+
+  /* ---- end / disqualify ---- */
+  .center { text-align: center; }
+  .center h1.q { font-size: clamp(1.9rem, 5.5vw, 2.9rem); }
+  .center .hint { margin-left: auto; margin-right: auto; }
+  .center .controls { justify-content: center; }
+
+  .bigicon {
+    width: 62px; height: 62px; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 26px; font-size: 30px;
+  }
+  .bigicon.go { background: var(--accent-soft); color: var(--accent); }
+  .bigicon.stop { background: #fdecec; color: var(--danger); }
+
+  .spinner {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 3px solid var(--line); border-top-color: var(--accent);
+    animation: spin .7s linear infinite; margin: 0 auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 480px) {
+    #stage { padding: 76px 20px 20px; align-items: flex-start; }
+    .options.grid { grid-template-columns: 1fr 1fr; }
+    #brand { top: 18px; left: 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card, #progress > span { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div id="progress"><span id="progress-bar"></span></div>
+  <div id="brand"><span class="dot"></span>Scalbl<span style="color:var(--muted-2)">.io</span></div>
+
+  <div id="stage"><!-- cards injected --></div>
+
+<script>
+/* ============================================================
+   CONFIG
+   Set WEBHOOK_URL to your Make.com / Zapier catch hook to
+   receive submissions. Leave "" to just log to console.
+   ============================================================ */
+const WEBHOOK_URL = ""; // e.g. "https://hook.eu1.make.com/xxxxxxxx"
+
+/* ---- survey definition ---- */
+const STATES = ["NSW","VIC","QLD","WA","SA","TAS","ACT","NT"];
+const START  = ["Today","In a few days","Next week","Later"];
+
+const steps = [
+  { id: "firstName", type: "text", eyebrow: "About you",
+    q: "First things first — what's your name?",
+    placeholder: "Your first name", inputType: "text", required: true },
+
+  { id: "state", type: "choice", eyebrow: "Location",
+    q: "What state are you based in?",
+    grid: true, options: STATES },
+
+  { id: "citizen", type: "choice", eyebrow: "Eligibility",
+    q: "Are you an Australian citizen?",
+    options: ["Yes","No"] },
+
+  { id: "experience", type: "longtext", eyebrow: "Experience",
+    q: "Have you worked in sales before?",
+    hint: "Tell us about it — the more detail the better (minimum 10 words).",
+    placeholder: "Where you've sold, what you sold, results you're proud of…",
+    minWords: 10, required: true },
+
+  { id: "start", type: "choice", eyebrow: "Availability",
+    q: "How soon can you start?",
+    options: START },
+
+  { id: "phone", type: "text", eyebrow: "Contact",
+    q: "What's the best number to reach you on?",
+    placeholder: "04xx xxx xxx", inputType: "tel", required: true },
+
+  { id: "email", type: "text", eyebrow: "Contact",
+    q: "And your email address?",
+    placeholder: "you@email.com", inputType: "email", required: true, isEmail: true },
+
+  { id: "submit", type: "end" }
+];
+
+/* ---- runtime ---- */
+const answers = {};
+const flow = steps;
+const disqualify = { id: "disqualify", type: "disqualify" };
+let idx = 0;
+let terminated = false;
+
+const stage = document.getElementById("stage");
+const bar   = document.getElementById("progress-bar");
+
+const questionSteps = flow.filter(s => ["text","longtext","choice"].includes(s.type));
+
+function progressFor(step) {
+  const qIndex = questionSteps.indexOf(step);
+  if (["end","disqualify"].includes(step.type)) return 100;
+  return Math.round(((qIndex + 1) / (questionSteps.length + 1)) * 100);
+}
+
+function render(step) {
+  bar.style.width = progressFor(step) + "%";
+  const card = document.createElement("div");
+  card.className = "card active";
+  card.dataset.id = step.id;
+
+  if (step.type === "text")          buildText(card, step);
+  else if (step.type === "longtext") buildLong(card, step);
+  else if (step.type === "choice")   buildChoice(card, step);
+  else if (step.type === "end")      buildEnd(card);
+  else if (step.type === "disqualify") buildDisqualify(card);
+
+  stage.innerHTML = "";
+  stage.appendChild(card);
+
+  const focusable = card.querySelector(".field");
+  if (focusable) setTimeout(() => focusable.focus(), 60);
+}
+
+function eyebrowEl(step) {
+  const n = questionSteps.indexOf(step) + 1;
+  const total = questionSteps.length;
+  return `<div class="eyebrow">${step.eyebrow || ""}
+    <span class="arrow">·</span>
+    <span class="num">${String(n).padStart(2,"0")} / ${String(total).padStart(2,"0")}</span></div>`;
+}
+
+/* ---------- SHORT TEXT ---------- */
+function buildText(card, step) {
+  card.innerHTML = `
+    ${eyebrowEl(step)}
+    <h1 class="q">${step.q}</h1>
+    ${step.hint ? `<p class="hint">${step.hint}</p>` : ""}
+    <input class="field" type="${step.inputType || "text"}"
+           inputmode="${step.inputType === "tel" ? "tel" : step.inputType === "email" ? "email" : "text"}"
+           placeholder="${step.placeholder || ""}"
+           value="${answers[step.id] ? escapeAttr(answers[step.id]) : ""}"
+           autocomplete="${step.id === "email" ? "email" : step.id === "phone" ? "tel" : step.id === "firstName" ? "given-name" : "off"}" />
+    <div class="err" id="err"></div>
+    ${controlsEl()}`;
+  wireControls(card, step, () => {
+    const v = card.querySelector(".field").value.trim();
+    if (step.required && !v) return fail(card, "This one's required.");
+    if (step.isEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return fail(card, "That email doesn't look right.");
+    if (step.id === "phone" && v.replace(/\D/g,"").length < 8) return fail(card, "That number looks too short.");
+    answers[step.id] = v; return true;
+  });
+}
+
+/* ---------- LONG TEXT ---------- */
+function buildLong(card, step) {
+  card.innerHTML = `
+    ${eyebrowEl(step)}
+    <h1 class="q">${step.q}</h1>
+    ${step.hint ? `<p class="hint">${step.hint}</p>` : ""}
+    <textarea class="field" placeholder="${step.placeholder || ""}">${answers[step.id] ? escapeHtml(answers[step.id]) : ""}</textarea>
+    <div class="meta-row"><span id="wordcount">0 words</span><span id="wordok" class="ok" style="display:none">looks good ✓</span></div>
+    <div class="err" id="err"></div>
+    ${controlsEl()}`;
+  const ta = card.querySelector("textarea");
+  const wc = card.querySelector("#wordcount");
+  const ok = card.querySelector("#wordok");
+  const count = () => {
+    const n = wordCount(ta.value);
+    wc.textContent = n + (n === 1 ? " word" : " words");
+    const good = n >= step.minWords;
+    ok.style.display = good ? "" : "none";
+    wc.style.color = good ? "var(--accent)" : "var(--muted-2)";
+  };
+  ta.addEventListener("input", count); count();
+  wireControls(card, step, () => {
+    const v = ta.value.trim();
+    if (wordCount(v) < step.minWords) return fail(card, `Please give at least ${step.minWords} words — a sentence or two.`);
+    answers[step.id] = v; return true;
+  }, true);
+}
+
+/* ---------- CHOICE ---------- */
+function buildChoice(card, step) {
+  const keys = "ABCDEFGH";
+  const opts = step.options.map((o,i) => `
+    <button class="opt ${answers[step.id] === o ? "sel" : ""}" data-val="${escapeAttr(o)}">
+      <span class="key">${keys[i]}</span><span>${o}</span>
+    </button>`).join("");
+  card.innerHTML = `
+    ${eyebrowEl(step)}
+    <h1 class="q">${step.q}</h1>
+    ${step.hint ? `<p class="hint">${step.hint}</p>` : ""}
+    <div class="options ${step.grid ? "grid" : ""}">${opts}</div>
+    <div class="err" id="err"></div>
+    <div class="controls">
+      ${idx > 0 ? `<button class="btn btn-ghost" id="back">← Back</button>` : ""}
+    </div>`;
+  card.querySelectorAll(".opt").forEach(btn => {
+    btn.onclick = () => {
+      const val = btn.dataset.val;
+      answers[step.id] = val;
+      card.querySelectorAll(".opt").forEach(b => b.classList.remove("sel"));
+      btn.classList.add("sel");
+      if (step.branch && step.branch[val]) {
+        setTimeout(() => showDisqualify(), 220);
+      } else {
+        setTimeout(next, 200);
+      }
+    };
+  });
+  const back = card.querySelector("#back");
+  if (back) back.onclick = prev;
+  card.tabIndex = 0;
+  card._keyHandler = (e) => {
+    const i = keys.indexOf(e.key.toUpperCase());
+    const ni = parseInt(e.key) - 1;
+    const target = i > -1 ? i : (ni >= 0 ? ni : -1);
+    const opts = card.querySelectorAll(".opt");
+    if (target > -1 && opts[target]) opts[target].click();
+  };
+}
+
+/* ---------- END (submit) ---------- */
+function buildEnd(card) {
+  terminated = true;
+  card.classList.add("center");
+  card.innerHTML = `
+    <div class="spinner"></div>
+    <h1 class="q" style="margin-top:26px">Sending your application…</h1>
+    <p class="hint">Hang tight for a sec.</p>`;
+  submit(card);
+}
+
+function buildDisqualify(card) {
+  terminated = true;
+  card.classList.add("center");
+  card.innerHTML = `
+    <div class="bigicon stop">✕</div>
+    <h1 class="q">Thanks for your interest</h1>
+    <p class="hint">Unfortunately this role requires Australian citizenship, so we're not able to move forward on this occasion. We genuinely appreciate you taking the time, and we wish you the very best.</p>`;
+  bar.style.width = "100%";
+  fireWebhook({ ...answers, _status: "disqualified", _reason: "not_citizen", _submittedAt: new Date().toISOString() });
+}
+
+/* ---------- controls helpers ---------- */
+function controlsEl() {
+  return `<div class="controls">
+    ${idx > 0 ? `<button class="btn btn-ghost" id="back">← Back</button>` : ""}
+    <button class="btn btn-primary" id="ok">OK &nbsp;→</button>
+    <span class="enterhint">press <b>Enter ↵</b></span>
+  </div>`;
+}
+
+function wireControls(card, step, validate, isTextarea=false) {
+  const ok = card.querySelector("#ok");
+  const back = card.querySelector("#back");
+  const go = () => { if (validate()) next(); };
+  if (ok) ok.onclick = go;
+  if (back) back.onclick = prev;
+  const field = card.querySelector(".field");
+  if (field) {
+    field.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        if (isTextarea && !(e.metaKey || e.ctrlKey)) return;
+        e.preventDefault(); go();
+      }
+    });
+  }
+}
+
+function fail(card, msg) {
+  const err = card.querySelector("#err");
+  if (err) err.textContent = msg;
+  return false;
+}
+
+/* ---------- navigation ---------- */
+function next() {
+  if (terminated) return;
+  if (idx < flow.length - 1) { idx++; render(flow[idx]); }
+}
+function prev() {
+  if (idx > 0) { idx--; render(flow[idx]); }
+}
+function showDisqualify() { render(disqualify); }
+
+/* ---------- submit ---------- */
+async function submit(card) {
+  const eligible = answers.citizen !== "No";
+  const payload = {
+    ...answers,
+    _status: "complete",
+    _eligible: eligible,
+    _submittedAt: new Date().toISOString()
+  };
+  await fireWebhook(payload);
+
+  if (!eligible) {
+    // Neutral close — no indication the applicant has been screened out.
+    card.innerHTML = `
+      <div class="bigicon go">✓</div>
+      <h1 class="q">Thanks${answers.firstName ? ", " + escapeHtml(answers.firstName) : ""}!</h1>
+      <p class="hint">We will review your application and get back to you if it's a fit.</p>`;
+    return;
+  }
+
+  card.innerHTML = `
+    <div class="bigicon go">✓</div>
+    <h1 class="q">You're all set${answers.firstName ? ", " + escapeHtml(answers.firstName) : ""}!</h1>
+    <p class="hint">Your application's in. If it's a fit, someone from the team will reach out to <b style="color:var(--text)">${escapeHtml(answers.phone || answers.email || "you")}</b> shortly.</p>`;
+}
+
+async function fireWebhook(payload) {
+  if (!WEBHOOK_URL) { console.log("[survey] submission:", payload); return; }
+  try {
+    await fetch(WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (err) { console.error("[survey] webhook failed:", err); }
+}
+
+/* ---------- utils ---------- */
+function wordCount(s) { return (s.trim().match(/\S+/g) || []).length; }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+/* ---------- global keyboard ---------- */
+document.addEventListener("keydown", (e) => {
+  const active = stage.querySelector(".card");
+  if (!active) return;
+  if (active._keyHandler) active._keyHandler(e);
+});
+
+/* ---------- boot ---------- */
+render(flow[0]);
+</script>
+</body>
+</html>
